@@ -1,0 +1,26 @@
+# FastAPI
+uvicorn[standard]==0.23.2
+fastapi==0.115.11
+pydantic[email]==2.4.2
+httpx==0.28.1
+starlette==0.46.1
+
+# API Client
+requests==2.31.0
+
+# SQL/Postgres
+SQLAlchemy==2.0.39
+sqlalchemy-utils==0.41.1
+psycopg2-binary==2.9.10
+asyncpg==0.28.0
+
+# CI
+anybadge==1.14.0
+mypy==1.5.1
+pylint==3.0.1
+ruff==0.9.6
+pytest==7.4.2
+pytest-mock==3.14.0
+
+# Caching
+redis==5.2.1

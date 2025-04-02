@@ -1,0 +1,25 @@
+FROM node:16
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies
+COPY ./frontend/package.json ./
+COPY ./frontend/package-lock.json ./
+RUN npm install
+
+# Copy application code
+COPY ./frontend/ ./
+
+# Pass environment variables
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+
+# Build the React app
+RUN npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Serve the React app
+CMD ["npx", "serve", "-s", "build", "-l", "3000"]
