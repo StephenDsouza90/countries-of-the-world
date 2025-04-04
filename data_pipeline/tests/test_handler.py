@@ -48,5 +48,5 @@ def test_add_and_update_countries(mock_db_manager):
     Handler.add_and_update_countries_to_database(
         mock_db_manager, new_countries, updated_countries
     )
-    mock_db_manager.bulk_add_countries.assert_called_once_with(new_countries)
-    mock_db_manager.bulk_update_countries.assert_called_once_with(updated_countries)
+    mock_db_manager.add_bulk_countries.assert_called_once_with(new_countries)
+    mock_db_manager.update_bulk_countries.assert_called_once_with(updated_countries)

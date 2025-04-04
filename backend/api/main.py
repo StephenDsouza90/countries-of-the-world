@@ -7,9 +7,8 @@ It also sets up the routes for the API.
 from typing import Optional
 
 from redis import StrictRedis
-from fastapi import FastAPI
+from fastapi import FastAPI, Query, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Query
 
 from backend.db.manager import DatabaseManager
 from backend.api.decorator import handle_exception
@@ -71,13 +70,6 @@ class APIBackend:
         return CacheManager(redis_client)
 
     def _setup_routes(self):
-        @self.app.get("/")
-        async def get_root():
-            """
-            Show welcome message
-            """
-            return {"message": "Welcome to the recruiting test backend API."}
-
         @self.app.get("/countries")
         @handle_exception
         async def get_countries(
@@ -103,3 +95,62 @@ class APIBackend:
             """
             countries = self.request_handler.get_countries(limit, sortBy, orderBy)
             return {"countries": countries}
+
+        @self.app.get("/countries/{countryName}")
+        @handle_exception
+        async def get_country(countryName: str):
+            """
+            Get a country by name
+
+            Args:
+                country_name (str): The name of the country to retrieve
+
+            Returns:
+                dict: A dictionary containing the country data
+
+            Raises:
+                ValueError: If the field are not valid
+            """
+            country = self.request_handler.get_country(countryName)
+            return {"country": country}
+
+        @self.app.post("/countries/{countryName}/images")
+        @handle_exception
+        async def upload_image(
+            countryName: str,
+            file: UploadFile = File(...),
+            title: str = Form(...),
+            description: str = Form(...),
+        ):
+            """
+            Upload an image for a country
+
+            Args:
+                country_name (str): The name of the country
+                file (UploadFile): The image file to upload
+                title (str): The title of the image
+                description (str): The description of the image
+
+            Returns:
+                dict: A dictionary containing the result of the upload
+            """
+            file_content = await file.read()  # Read the file content
+            result = self.request_handler.upload_image(
+                countryName, file_content, title, description
+            )
+            return {"result": result}
+
+        @self.app.get("/countries/{countryName}/images")
+        @handle_exception
+        async def get_images(countryName: str):
+            """
+            Get images for a country
+
+            Args:
+                country_name (str): The name of the country
+
+            Returns:
+                dict: A dictionary containing the list of images
+            """
+            images = self.request_handler.get_images(countryName)
+            return {"images": images}

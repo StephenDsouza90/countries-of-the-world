@@ -9,7 +9,7 @@ from typing import List, Optional
 # Add the project root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from backend.db.model import Country
+from backend.db.model import Country, Image
 from db.setup import SQLBackend
 from db.decorator import handle_session
 
@@ -23,21 +23,22 @@ class DatabaseManager(SQLBackend):
         super().__init__(connection_string)
 
     @handle_session
-    def get_country(self, session, name: str) -> Country:
+    def get_country(self, session, country_name: str) -> Country:
         """
         Get a country from the database.
 
+
         Args:
             session: database session
-            name: name of the country
+            country_name: name of the country
 
         Returns:
             Country: country object
         """
-        return session.query(Country).filter(Country.name == name).first()
+        return session.query(Country).filter(Country.name == country_name).first()
 
     @handle_session
-    def bulk_add_countries(self, session, countries: List[dict]):
+    def add_bulk_countries(self, session, countries: List[dict]):
         """
         Add multiple countries to the database.
 
@@ -52,7 +53,7 @@ class DatabaseManager(SQLBackend):
         session.commit()
 
     @handle_session
-    def bulk_update_countries(self, session, countries: List[dict]):
+    def update_bulk_countries(self, session, countries: List[dict]):
         """
         Update multiple countries in the database.
 
@@ -97,3 +98,33 @@ class DatabaseManager(SQLBackend):
             query = query.limit(limit)
 
         return query.all()
+
+    @handle_session
+    def add_image_meta_data(self, session, image: Image) -> int:
+        """
+        Add image meta data to the database.
+
+        Args:
+            session: database session
+            image: image object to add
+
+        Returns:
+            int: id of the image
+        """
+        session.add(image)
+        session.commit()
+        return image.id
+
+    @handle_session
+    def get_images_meta_data(self, session, country_name: str) -> List[Image]:
+        """
+        Get images meta data from the database for a specific country.
+
+        Args:
+            session: database session
+            country_name: name of the country
+
+        Returns:
+            List[Image]: list of image objects
+        """
+        return session.query(Image).filter_by(country_name=country_name).all()

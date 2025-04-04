@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const CountriesTable = () => {
   const [countries, setCountries] = useState([]);
@@ -8,6 +9,7 @@ const CountriesTable = () => {
   const [orderBy, setOrderBy] = useState("asc"); // Default sort order
   const [limit, setLimit] = useState(null); // Default limit
   const apiUrl = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate(); // Initialize navigate
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -40,6 +42,10 @@ const CountriesTable = () => {
 
   const handleLimitChange = (e) => {
     setLimit(Number(e.target.value));
+  };
+
+  const handleCountryClick = (countryName) => {
+    navigate(`/countries/${countryName}`);
   };
 
   return (
@@ -94,7 +100,21 @@ const CountriesTable = () => {
             countries.map((country, index) => (
               <tr key={index}>
                 <td>{index + 1}</td>
-                <td>{country.name}</td>
+                <td>
+                  <button 
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'blue',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      padding: 0
+                    }}
+                    onClick={() => handleCountryClick(country.name)}
+                  >
+                    {country.name}
+                  </button>
+                </td>
                 <td>{country.population}</td>
                 <td>{country.area}</td>
                 <td>{country.population_density.toFixed(2)}</td>

@@ -46,6 +46,7 @@ services:
       dockerfile: docker/Dockerfile.backend
     volumes:
       - ./:/srv/recruiting/
+      - ./assets:/assets
     command: uvicorn --reload --reload-dir "/srv/recruiting/backend" --host 0.0.0.0 --port 8080 --log-level "debug" "backend.api.app:app"
     environment:
       DB_URL: "postgresql://postgres:postgres@postgres:5432/recruiting"

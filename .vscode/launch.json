@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Data Extractor: Add Data",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/data_extractor.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Backend FastAPI: Run",
+            "type": "debugpy",
+            "request": "launch",
+            
+        },
+        {
+            "name": "Unit Test: Pytest",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+            "--rootdir=${workspaceFolder}"
+            ],
+            "console": "integratedTerminal"
+        }
+    ]
+}

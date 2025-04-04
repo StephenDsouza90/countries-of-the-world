@@ -24,3 +24,6 @@ pytest-mock==3.14.0
 
 # Caching
 redis==5.2.1
+
+# Python
+python-multipart==0.0.20

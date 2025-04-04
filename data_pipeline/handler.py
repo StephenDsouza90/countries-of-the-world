@@ -34,13 +34,13 @@ class Handler:
         """
         if new_countries:
             print(f"Adding {len(new_countries)} new countries")
-            db_manager.bulk_add_countries(new_countries)
+            db_manager.add_bulk_countries(new_countries)
         else:
             print("No new countries to add")
 
         if updated_countries:
             print(f"Updating {len(updated_countries)} countries")
-            db_manager.bulk_update_countries(updated_countries)
+            db_manager.update_bulk_countries(updated_countries)
         else:
             print("No countries to update")
 

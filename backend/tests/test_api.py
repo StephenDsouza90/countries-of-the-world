@@ -42,15 +42,6 @@ def mock_client(mock_db_manager, mock_cache_client) -> TestClient:
     return TestClient(backend.app)
 
 
-def test_get_root(mock_client):
-    """
-    Test the root endpoint.
-    """
-    response = mock_client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Welcome to the recruiting test backend API."}
-
-
 def test_get_countries_success(mock_client, mock_db_manager, mock_cache_client):
     """
     Test successful fetching of countries from the database.

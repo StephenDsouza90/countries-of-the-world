@@ -18,7 +18,7 @@ class CacheManager:
         """
         self.client = client
 
-    def set_data(self, key: str, value: str) -> bool:
+    def set_data(self, key: str, value: any) -> bool:
         """
         Set data in Redis cache with a specified key and value.
 
@@ -36,7 +36,7 @@ class CacheManager:
             print(f"Error setting data in cache: {e}")
             return False
 
-    def get_data(self, key: str) -> str:
+    def get_data(self, key: str) -> any:
         """
         Get data from Redis cache using a specified key.
 

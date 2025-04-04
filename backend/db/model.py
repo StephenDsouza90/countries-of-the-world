@@ -3,7 +3,7 @@ Country object that will be mapped to the country table.
 """
 
 import warnings
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 # Official Docks: https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/basic_use.html
 
@@ -52,3 +52,16 @@ class Country(Base):
             "area": self.area,
             "population_density": self.population_density,
         }
+
+
+class Image(Base):
+    """
+    This class is used to create the image table that stores image meta data.
+    """
+
+    __tablename__ = "images"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    country_name = Column(String, ForeignKey("countries.name"), nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
