@@ -8,8 +8,18 @@ const CountriesTable = () => {
   const [sortBy, setSortBy] = useState("name"); // Default sort field
   const [orderBy, setOrderBy] = useState("asc"); // Default sort order
   const [limit, setLimit] = useState(null); // Default limit
-  const apiUrl = process.env.REACT_APP_API_URL;
+  let apiUrl = process.env.REACT_APP_API_URL;
   const navigate = useNavigate(); // Initialize navigate
+
+  console.log("API URL:", apiUrl);
+
+  // If apiUrl is not set, hard code it for testing
+  if (!apiUrl) {
+    console.warn("API URL is not set. Using hardcoded URL for testing.");
+    apiUrl = "http://localhost:8080"; // Replace with your actual API URL
+  }
+
+  console.log("API URL:", apiUrl);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -23,6 +33,7 @@ const CountriesTable = () => {
             },
           }
         );
+        console.log("Response data:", response.data);
         setCountries(response.data.countries);
       } catch (err) {
         setError("Failed to fetch countries. Please try again later.");

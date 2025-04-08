@@ -28,7 +28,7 @@ class APIBackend:
         )
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["http://localhost:3000"],
+            allow_origins=["*"],
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
@@ -154,3 +154,14 @@ class APIBackend:
             """
             images = self.request_handler.get_images(countryName)
             return {"images": images}
+
+        @self.app.get("/health")
+        @handle_exception
+        async def health_check():
+            """
+            Health check endpoint
+
+            Returns:
+                dict: A dictionary containing the health status
+            """
+            return {"status": "ok"}

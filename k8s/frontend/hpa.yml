@@ -1,0 +1,25 @@
+# hpa-backend.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend  # Targets the "frontend" Deployment
+  minReplicas: 1   # Minimum pods
+  maxReplicas: 3   # Maximum pods
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu   # Scale based on CPU usage
+        target:
+          type: Utilization
+          averageUtilization: 50  # Target 50% CPU usage
+  behavior:
+    scaleUp: # Behavior when scaling up
+      stabilizationWindowSeconds: 60 # Time to wait before scaling up
+    scaleDown: # Behavior when scaling down
+      stabilizationWindowSeconds: 60 # Time to wait before scaling down
+    

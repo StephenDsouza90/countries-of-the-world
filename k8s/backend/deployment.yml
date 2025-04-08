@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend # Container name
+          image: backend:latest # Replace with your image name
+          imagePullPolicy: Never  # Forces use of local image
+          ports:
+            - containerPort: 8080 # Port exposed by the container
+          command: ["uvicorn"]
+          args: [
+            "--reload",
+            "--reload-dir", "/srv/recruiting/backend",
+            "--host", "0.0.0.0",
+            "--port", "8080",
+            "--log-level", "debug",
+            "backend.api.app:app"
+          ]
+          livenessProbe:
+            httpGet:
+              path: /health # Liveness check endpoint
+              port: 8080 # Port for the liveness check
+            initialDelaySeconds: 5 # Delay before starting the liveness check
+            periodSeconds: 10 # Frequency of the liveness check
+          readinessProbe:
+            httpGet:
+              path: /health # Readiness check endpoint
+              port: 8080 # Port for the readiness check
+            initialDelaySeconds: 5 # Delay before starting the readiness check
+            periodSeconds: 10 # Frequency of the readiness check
+          env:
+            - name: DB_URL
+              value: "postgresql://postgres:postgres@postgres:5432/recruiting" # Database connection string
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          volumeMounts: # Correct placement of mountPath
+            - name: assets-volume
+              mountPath: /assets # Path inside the container
+      volumes: # Mounting volumes
+        - name: assets-volume
+          persistentVolumeClaim:
+            claimName: assets-pvc # Name of the PVC to use
+  

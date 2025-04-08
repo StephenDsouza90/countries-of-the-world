@@ -160,3 +160,5 @@ package-lock.json
 
 # ruff
 .ruff_cache/
+
+*.jpg

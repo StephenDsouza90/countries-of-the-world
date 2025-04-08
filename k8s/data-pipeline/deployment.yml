@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-pipeline
+  labels:
+    app: data-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-pipeline
+  template:
+    metadata:
+      labels:
+        app: data-pipeline
+    spec:
+      containers:
+        - name: data-pipeline # Container name
+          image: data-pipeline:latest # Replace with your image name
+          imagePullPolicy: Never  # Forces use of local image
+          ports:
+            - containerPort: 8000 # Port exposed by the container
+          env:
+            - name: DB_URL
+              value: "postgresql://postgres:postgres@postgres:5432/recruiting" # Database connection string
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"

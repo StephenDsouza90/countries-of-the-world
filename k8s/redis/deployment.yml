@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis # Container name
+          image: redis:6
+          command: ["redis-server", "--save 60 1", "--appendonly yes"]  # Command to run Redis server with persistence
+          ports:
+            - containerPort: 6379
+          livenessProbe: # Liveness probe to check if the Redis container is alive
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe: # Readiness probe to check if the Redis container is ready to accept traffic
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+      volumes:
+        - name: redis-data
+          emptyDir: {}  # Use emptyDir for simplicity; in production, consider using a persistent volume

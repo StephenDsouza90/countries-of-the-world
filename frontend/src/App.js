@@ -8,6 +8,7 @@ function App() {
     <Routes>
       <Route path="/" element={<CountriesTable />} />
       <Route path="/countries/:countryName" element={<CountryDetailsPage />} />
+      <Route path="/health" element={<div>OK</div>} />
     </Routes>
   );
 }

@@ -23,7 +23,16 @@ const CountryDetailsPage = () => {
   const [newImageTitle, setNewImageTitle] = useState('');
   const [newImageDescription, setNewImageDescription] = useState('');
 
-  const apiUrl = process.env.REACT_APP_API_URL;
+  let apiUrl = process.env.REACT_APP_API_URL;
+  console.log("API URL:", apiUrl);
+
+  // If apiUrl is not set, hard code it for testing
+  if (!apiUrl) {
+    console.warn("API URL is not set. Using hardcoded URL for testing.");
+    apiUrl = "http://localhost:8080"; // Replace with your actual API URL
+  }
+
+  console.log("API URL:", apiUrl);
 
   // Fetch country info
   useEffect(() => {
