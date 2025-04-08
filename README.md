@@ -95,6 +95,15 @@ docker-compose down
 
 ### Docker Compose
 
+The `docker-compose.yml` file orchestrates the multi-container setup. It ensures that the services start in the correct order:
+
+1. The **PostgreSQL** database container starts first and waits until it is healthy.
+2. The **Data Pipeline** container runs to populate the database with data from the external API.
+3. The **Backend** container starts, initializing the API and making it available for the frontend.
+4. Finally, the **Frontend** container starts, providing the user interface for interacting with the application.
+
+It is setup this way to avoid running into a race condition.
+
 ```
 # Build and start all services
 docker-compose up -d --build
@@ -168,3 +177,21 @@ make test
 - Unit tests for all core components
 - Integration tests for API endpoints
 - Mocked external API calls
+
+```
+✗ make test
+
+python3.10 -m pytest
+==================== test session starts ====================
+platform darwin -- Python 3.10.15, pytest-7.4.2, pluggy-1.5.0
+plugins: anyio-3.7.1, mock-3.14.0
+collected 9 items                                                                                                                                                                         
+
+backend/tests/test_api.py ...                                                            [ 33%]
+data_pipeline/tests/test_client.py ..                                                    [ 55%]
+data_pipeline/tests/test_handler.py .                                                    [ 66%]
+data_pipeline/tests/test_main.py .                                                       [ 77%]
+data_pipeline/tests/test_processor.py ..                                                 [100%]
+
+==================== 9 passed in 0.32s ====================
+```
