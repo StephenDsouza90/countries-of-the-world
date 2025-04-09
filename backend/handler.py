@@ -5,6 +5,7 @@ This module handles the request processing and data retrieval from the database 
 
 import os
 import base64
+import json
 from typing import List
 
 from internal.db.manager import NoSQLDatabaseManager
@@ -56,6 +57,19 @@ class RequestHandler:
             "description": image["description"],
         }
 
+    def _get_file_path(self, country_name: str, image_id: str) -> str:
+        """
+        Get the file path for the image.
+
+        Args:
+            country_name (str): The name of the country.
+            image_id (str): The ID of the image.
+
+        Returns:
+            str: The file path for the image.
+        """
+        return f"/assets/{country_name}/images/{image_id}.jpg"
+
     def _create_random_image_id(self) -> str:
         """
         Create a random image ID.
@@ -77,21 +91,19 @@ class RequestHandler:
         Returns:
             List[Country]: A list of Country objects.
         """
-        # cache_key = f"countries:limit={limit}:sort_by={sort_by}:order_by={order_by}"
+        cache_key = f"countries:limit={limit}:sort_by={sort_by}:order_by={order_by}"
 
-        # # Check if the data is in the cache
-        # cached_data = self.cache_manager.get_data(cache_key)
-        # if cached_data:
-        #     return []
+        # Check if the data is in the cache
+        cached_data = self.cache_manager.get_data(cache_key)
+        if cached_data:
+            return json.loads(cached_data)
 
         # If not in cache, fetch from the database
         countries = self.db_manager.get_countries(limit, sort_by, order_by)
         countries = [self._extract_country_data(country) for country in countries]
 
         # Serialize the result and store it in the cache
-        # self.cache_manager.set_data(
-        #     cache_key, json.dumps([country.to_dict() for country in countries])
-        # )
+        self.cache_manager.set_data(cache_key, json.dumps(countries))
 
         return countries
 
@@ -105,19 +117,19 @@ class RequestHandler:
         Returns:
             Country: A Country object.
         """
-        # cache_key = f"country:{country_name}"
+        cache_key = f"country:{country_name}"
 
-        # # Check if the data is in the cache
-        # cached_data = self.cache_manager.get_data(cache_key)
-        # if cached_data:
-        #     return Country(**json.loads(cached_data))
+        # Check if the data is in the cache
+        cached_data = self.cache_manager.get_data(cache_key)
+        if cached_data:
+            return json.loads(cached_data)
 
         # If not in cache, fetch from the database
         country = self.db_manager.get_country(country_name)
         country = self._extract_country_data(country)
 
-        # # Serialize the result and store it in the cache
-        # self.cache_manager.set_data(cache_key, json.dumps(country.to_dict()))
+        # Serialize the result and store it in the cache
+        self.cache_manager.set_data(cache_key, json.dumps(country))
 
         return country
 
@@ -136,11 +148,11 @@ class RequestHandler:
             description (str): The description of the image.
 
         Returns:
-
+            str: The ID of the uploaded image.
         """
         image_id = self._create_random_image_id()
 
-        file_path = f"/assets/{country_name}/images/{image_id}.jpg"
+        file_path = self._get_file_path(country_name, image_id)
 
         image = {
             "image_id": image_id,
@@ -150,14 +162,34 @@ class RequestHandler:
             "file_path": file_path,
         }
 
+        # Save image metadata to the database
         self.db_manager.add_image(image_id, image)
 
+        # Save the image file to the file system
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
         with open(file_path, "wb") as f:
             f.write(file)
 
-        # TODO: Do something with the cache
+        # Update the cache for the country's images
+        cache_key = f"images:{country_name}"
+        cached_images = self.cache_manager.get_data(cache_key)
+        if cached_images:
+            cached_images = json.loads(cached_images)
+        else:
+            cached_images = []
+
+        # Add the new image metadata to the cache
+        cached_images.append(
+            {
+                "image_id": image_id,
+                "title": title,
+                "description": description,
+                "file": base64.b64encode(file).decode("utf-8"),
+            }
+        )
+
+        # Serialize and update the cache
+        self.cache_manager.set_data(cache_key, json.dumps(cached_images))
 
         return image_id
 
@@ -171,34 +203,31 @@ class RequestHandler:
         Returns:
             List[bytes]: A list of image files.
         """
-        # Get images meta data from the database
-        print("Trying to get images from the database")
-        images_meta_data = self.db_manager.get_images(country_name)
-        print(len(images_meta_data))
-        print("Got images from the database")
+        cache_key = f"images:{country_name}"
 
+        # Check if the data is in the cache
+        cached_data = self.cache_manager.get_data(cache_key)
+        if cached_data:
+            return json.loads(cached_data)
+
+        # Get images meta data from the database
+        images_meta_data = self.db_manager.get_images(country_name)
         images_meta_data = [
             self._extract_image_data(image) for image in images_meta_data
         ]
-        print(len(images_meta_data))
 
         # Get images from the file system
         images = []
 
         for image in images_meta_data:
-            image_id = image["image_id"]
-
-            file_path = f"/assets/{country_name}/images/{image_id}.jpg"
-
+            file_path = self._get_file_path(country_name, image["image_id"])
             if os.path.exists(file_path):
                 with open(file_path, "rb") as f:
                     file = f.read()
-                    encoded_file = base64.b64encode(file).decode("utf-8")
-
-                    image["file"] = encoded_file
-
+                    image["file"] = base64.b64encode(file).decode("utf-8")
                     images.append(image)
 
-        # TODO: Do something with the cache
+        # Serialize the result and store it in the cache
+        self.cache_manager.set_data(cache_key, json.dumps(images))
 
         return images

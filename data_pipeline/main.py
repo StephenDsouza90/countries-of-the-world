@@ -8,9 +8,10 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from data_pipeline.client import RestCountriesAPIClient
 from data_pipeline.handler import Handler
 from internal.db.manager import NoSQLDatabaseManager
-from internal.cache.client import redis_client
+from internal.cache.client import RedisClient
 from internal.cache.cache import CacheManager
 
 
@@ -34,31 +35,20 @@ class DataPipelineOrchestrator:
         """
         Main method to orchestrate the data pipeline.
         """
-        # countries = RestCountriesAPIClient.fetch_countries()
-        countries = [
-            {
-                "name": {"common": "Country1"},
-                "region": "Region1",
-                "population": 1000000,
-                "area": 100000,
-            },
-            {
-                "name": {"common": "Country2"},
-                "region": "Region2",
-                "population": 2000000,
-                "area": 200000,
-            },
-        ]
-
+        countries = RestCountriesAPIClient.fetch_countries()
         handler = Handler(self.db_manager, self.cache_manager)
         handler.process_countries(countries)
 
 
 if __name__ == "__main__":
     db_url = os.getenv("MANGO_DB_URL")
+    if not db_url:
+        raise ValueError("DB_URL environment variable is not set.")
+
     database_manager = NoSQLDatabaseManager(db_url)
     database_manager.bootstrap()
 
+    redis_client = RedisClient().get_client()
     cache_manager = CacheManager(redis_client)
 
     DataPipelineOrchestrator(database_manager, cache_manager).main()

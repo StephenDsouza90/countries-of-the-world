@@ -11,8 +11,8 @@ from fastapi import FastAPI, Query, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from internal.db.manager import NoSQLDatabaseManager
-from backend.api.decorator import handle_exception
-from backend.api.handler import RequestHandler
+from backend.decorator import handle_exception
+from backend.handler import RequestHandler
 from internal.cache.cache import CacheManager
 
 
@@ -140,7 +140,7 @@ class APIBackend:
             Returns:
                 dict: A dictionary containing the result of the upload
             """
-            file_content = await file.read()  # Read the file content
+            file_content = await file.read()
             result = self.request_handler.upload_image(
                 countryName, file_content, title, description
             )
