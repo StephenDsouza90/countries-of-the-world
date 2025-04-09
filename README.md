@@ -16,8 +16,8 @@ A full-stack application that provides comprehensive information about countries
 ### Backend
 
 - **Framework**: FastAPI (Python)
-- **Database**: PostgreSQL with SQLAlchemy ORM
-- **Caching**: Redis with persistence
+- **Database**: MongoDB
+- **Caching**: Redis
 
 ### Frontend
 - **Framework**: React.js
@@ -68,10 +68,18 @@ docker-compose down
 
 **Database Layer**
 
-- PostgreSQL relational database
-- SQLAlchemy ORM with declarative models
-- Session management
-- Optimized bulk operations for data loading
+- MongoDB NoSQL database
+
+To connect to DB
+
+```
+docker ps
+docker exec -it countries-of-the-world-mongo-1 mongo
+show dbs
+use recruiting
+show collections
+db.countries.find().pretty()
+```
 
 **API Layer**
 
@@ -80,16 +88,24 @@ docker-compose down
 
 **Caching Strategy**
 
-- Country information (TTL: 1 hour)
-- Frequent requests (TTL: 30 minutes)
-- Image assets (TTL: 24 hours)
-- Cache invalidation on data updates
+- Country information
+- Frequent requests
+- Image assets
+
+To connect to Redis
+
+```
+docker ps
+docker exec -it countries-of-the-world-redis-1 redis-cli
+KEYS *
+GET <key>
+```
 
 **Data Pipeline**
 
 - Extract: Fetch from REST Countries API
 - Transform: Calculate population density, format data
-- Load: Bulk upsert to PostgreSQL
+- Load: Insert to MongoDB
 
 ## Deployment Options (Locally)
 
@@ -97,7 +113,7 @@ docker-compose down
 
 The `docker-compose.yml` file orchestrates the multi-container setup. It ensures that the services start in the correct order:
 
-1. The **PostgreSQL** database container starts first and waits until it is healthy.
+1. The **MongoDB** database container starts first and waits until it is healthy.
 2. The **Data Pipeline** container runs to populate the database with data from the external API.
 3. The **Backend** container starts, initializing the API and making it available for the frontend.
 4. Finally, the **Frontend** container starts, providing the user interface for interacting with the application.
@@ -124,13 +140,16 @@ minikube start
 ```
 
 2. Build images:
+
 ```
-docker build -t data_pipeline:latest -f ./docker/Dockerfile.data_pipeline .
+eval $(minikube docker-env)
+docker build -t data-pipeline:latest -f ./docker/Dockerfile.data_pipeline .
 docker build -t backend:latest -f ./docker/Dockerfile.backend .
 docker build -t frontend:latest -f ./docker/Dockerfile.frontend .
 ```
 
 2. Load images:
+
 ```
 minikube image load data-pipeline:latest
 minikube image load backend:latest
@@ -138,30 +157,64 @@ minikube image load frontend:latest
 ```
 
 Check if the images are available in Minikube:
+
 ```
 minikube ssh
 docker images
 ```
 
 Incase you want to remove an image from minikube
+
 ```
 docker rmi <image-id>
 ```
 
 3. Deploy application:
+
 ```
-kubectl apply -f k8s/redis 
-kubectl apply -f k8s/postgres 
+kubectl apply -f k8s/redis
+kubectl apply -f k8s/mongo
 kubectl apply -f k8s/data-pipeline
 kubectl apply -f k8s/backend
 kubectl apply -f k8s/frontend
 kubectl apply -f k8s/network
 ```
 
+Verify resources:
+
+```
+kubectl get pods
+kubectl describe pod <pod-name> 
+kubectl logs <pod-name>
+```
+
+```
+kubectl exec -it <mongo-pod-name> -- mongo
+```
+
+The application uses an NGINX Ingress controller to route external traffic to the appropriate services within the Kubernetes cluster. The **Ingress** resource is defined in the `ingress.yml` file.
+
 4. Access services via Port forwarding:
+
 ```
 kubectl port-forward service/frontend 3000:3000
 kubectl port-forward service/backend 8080:8080
+```
+
+5. Clear up resources 
+
+Stop minikube
+
+```
+minikube stop
+minikube delete
+```
+
+Delete commands
+
+```
+kubectl delete pod <pod-name>
+kubectl delete deployment <deployment-name>     
 ```
 
 ## Testing
@@ -187,11 +240,11 @@ platform darwin -- Python 3.10.15, pytest-7.4.2, pluggy-1.5.0
 plugins: anyio-3.7.1, mock-3.14.0
 collected 9 items                                                                                                                                                                         
 
-backend/tests/test_api.py ...                                                            [ 33%]
-data_pipeline/tests/test_client.py ..                                                    [ 55%]
-data_pipeline/tests/test_handler.py .                                                    [ 66%]
-data_pipeline/tests/test_main.py .                                                       [ 77%]
-data_pipeline/tests/test_processor.py ..                                                 [100%]
+backend/tests/test_api_handler.py .......                                                                               [ 36%]
+data_pipeline/tests/test_client.py ..                                                                                   [ 47%]
+data_pipeline/tests/test_handler.py ....                                                                                [ 68%]
+internal/cache/tests/test_cache.py ....                                                                                 [ 89%]
+internal/cache/tests/test_redis_client.py ..                                                                            [100%]
 
 ==================== 9 passed in 0.32s ====================
 ```

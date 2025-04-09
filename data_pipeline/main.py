@@ -41,7 +41,7 @@ class DataPipelineOrchestrator:
 
 
 if __name__ == "__main__":
-    db_url = os.getenv("MANGO_DB_URL")
+    db_url = os.getenv("MONGO_DB_URL")
     if not db_url:
         raise ValueError("DB_URL environment variable is not set.")
 

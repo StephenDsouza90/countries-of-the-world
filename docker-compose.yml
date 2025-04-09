@@ -6,7 +6,7 @@ services:
     networks:
       - backend_network
 
-  mango:
+  mongo:
     image: "mongo:4.4"
     volumes:
       - mongo_data:/data/db
@@ -27,11 +27,11 @@ services:
     volumes:
       - ./:/srv/recruiting/
     environment:
-      MANGO_DB_URL: "mongodb://mango:27017"
+      MONGO_DB_URL: "mongodb://mongo:27017"
     networks:
       - backend_network
     depends_on:
-      mango:
+      mongo:
         condition: service_healthy
 
   backend:
@@ -43,7 +43,7 @@ services:
       - ./assets:/assets
     command: uvicorn --reload --reload-dir "/srv/recruiting/backend" --host 0.0.0.0 --port 8080 --log-level "debug" "backend.app:app"
     environment:
-      MANGO_DB_URL: "mongodb://mango:27017"
+      MONGO_DB_URL: "mongodb://mongo:27017"
     ports:
       - "8080:8080"
     networks:
