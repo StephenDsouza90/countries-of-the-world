@@ -5,12 +5,10 @@ This module handles the request processing and data retrieval from the database 
 
 import os
 import base64
-import json
-from typing import List, Optional
+from typing import List
 
-from backend.db.manager import DatabaseManager
-from backend.db.model import Country, Image
-from cache.cache import CacheManager
+from internal.db.manager import NoSQLDatabaseManager
+from internal.cache.cache import CacheManager
 
 
 class RequestHandler:
@@ -20,13 +18,54 @@ class RequestHandler:
     and managing the cache.
     """
 
-    def __init__(self, db_manager: DatabaseManager, cache_manager: CacheManager):
+    def __init__(self, db_manager: NoSQLDatabaseManager, cache_manager: CacheManager):
         self.db_manager = db_manager
         self.cache_manager = cache_manager
 
-    def get_countries(
-        self, limit: Optional[int], sort_by: str, order_by: str
-    ) -> List[Country]:
+    def _extract_country_data(self, country: dict) -> dict:
+        """
+        Extracts relevant data from the country object.
+
+        Args:
+            country (dict): The country object.
+
+        Returns:
+            dict: A dictionary containing the extracted data.
+        """
+        return {
+            "country_name": country["country_name"],
+            "population_density": country["population_density"],
+            "area": country["area"],
+            "population": country["population"],
+            "region": country["region"],
+        }
+
+    def _extract_image_data(self, image: dict) -> dict:
+        """
+        Extracts relevant data from the country object.
+
+        Args:
+            country (dict): The country object.
+
+        Returns:
+            dict: A dictionary containing the extracted data.
+        """
+        return {
+            "image_id": image["image_id"],
+            "title": image["title"],
+            "description": image["description"],
+        }
+
+    def _create_random_image_id(self) -> str:
+        """
+        Create a random image ID.
+
+        Returns:
+            str: A random image ID.
+        """
+        return os.urandom(16).hex()
+
+    def get_countries(self, limit: int, sort_by: str, order_by: int) -> List[dict]:
         """
         Get a list of countries from the database or cache.
 
@@ -38,24 +77,25 @@ class RequestHandler:
         Returns:
             List[Country]: A list of Country objects.
         """
-        cache_key = f"countries:limit={limit}:sort_by={sort_by}:order_by={order_by}"
+        # cache_key = f"countries:limit={limit}:sort_by={sort_by}:order_by={order_by}"
 
-        # Check if the data is in the cache
-        cached_data = self.cache_manager.get_data(cache_key)
-        if cached_data:
-            return [Country(**country) for country in json.loads(cached_data)]
+        # # Check if the data is in the cache
+        # cached_data = self.cache_manager.get_data(cache_key)
+        # if cached_data:
+        #     return []
 
         # If not in cache, fetch from the database
         countries = self.db_manager.get_countries(limit, sort_by, order_by)
+        countries = [self._extract_country_data(country) for country in countries]
 
         # Serialize the result and store it in the cache
-        self.cache_manager.set_data(
-            cache_key, json.dumps([country.to_dict() for country in countries])
-        )
+        # self.cache_manager.set_data(
+        #     cache_key, json.dumps([country.to_dict() for country in countries])
+        # )
 
         return countries
 
-    def get_country(self, country_name: str) -> Country:
+    def get_country(self, country_name: str) -> dict:
         """
         Get a country by name from the database or cache.
 
@@ -65,24 +105,25 @@ class RequestHandler:
         Returns:
             Country: A Country object.
         """
-        cache_key = f"country:{country_name}"
+        # cache_key = f"country:{country_name}"
 
-        # Check if the data is in the cache
-        cached_data = self.cache_manager.get_data(cache_key)
-        if cached_data:
-            return Country(**json.loads(cached_data))
+        # # Check if the data is in the cache
+        # cached_data = self.cache_manager.get_data(cache_key)
+        # if cached_data:
+        #     return Country(**json.loads(cached_data))
 
         # If not in cache, fetch from the database
         country = self.db_manager.get_country(country_name)
+        country = self._extract_country_data(country)
 
-        # Serialize the result and store it in the cache
-        self.cache_manager.set_data(cache_key, json.dumps(country.to_dict()))
+        # # Serialize the result and store it in the cache
+        # self.cache_manager.set_data(cache_key, json.dumps(country.to_dict()))
 
         return country
 
     def upload_image(
         self, country_name: str, file: bytes, title: str, description: str
-    ) -> dict:
+    ) -> str:
         """
         Upload an image for a country.
         This method handles the image upload process, including saving the file
@@ -97,16 +138,19 @@ class RequestHandler:
         Returns:
 
         """
-        # Save the meta data to the database
-        image = Image(
-            country_name=country_name,
-            title=title,
-            description=description,
-        )
-        image_id = self.db_manager.add_image_meta_data(image)
+        image_id = self._create_random_image_id()
 
-        # Save the file to the file system
         file_path = f"/assets/{country_name}/images/{image_id}.jpg"
+
+        image = {
+            "image_id": image_id,
+            "country_name": country_name,
+            "title": title,
+            "description": description,
+            "file_path": file_path,
+        }
+
+        self.db_manager.add_image(image_id, image)
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -128,26 +172,32 @@ class RequestHandler:
             List[bytes]: A list of image files.
         """
         # Get images meta data from the database
-        images_meta_data = self.db_manager.get_images_meta_data(country_name)
+        print("Trying to get images from the database")
+        images_meta_data = self.db_manager.get_images(country_name)
+        print(len(images_meta_data))
+        print("Got images from the database")
+
+        images_meta_data = [
+            self._extract_image_data(image) for image in images_meta_data
+        ]
+        print(len(images_meta_data))
 
         # Get images from the file system
         images = []
 
         for image in images_meta_data:
-            d = {}
+            image_id = image["image_id"]
 
-            file_path = f"/assets/{country_name}/images/{image.id}.jpg"
+            file_path = f"/assets/{country_name}/images/{image_id}.jpg"
 
             if os.path.exists(file_path):
                 with open(file_path, "rb") as f:
                     file = f.read()
-
                     encoded_file = base64.b64encode(file).decode("utf-8")
 
-                    d["file"] = encoded_file
-                    d["title"] = image.title
-                    d["description"] = image.description
-                    images.append(d)
+                    image["file"] = encoded_file
+
+                    images.append(image)
 
         # TODO: Do something with the cache
 

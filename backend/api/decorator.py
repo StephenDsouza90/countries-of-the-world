@@ -7,8 +7,6 @@ from functools import wraps
 from fastapi import HTTPException
 from fastapi import status as s
 
-from backend.db.model import Country
-
 
 def handle_exception(f):
     """
@@ -33,12 +31,19 @@ def handle_exception(f):
                 detail="Limit must be a positive integer.",
             )
 
-        if sort_by and sort_by not in Country.__table__.columns:
+        # TODO : Check if value is available
+        if sort_by and sort_by not in [
+            "country_name",
+            "population_density",
+            "area",
+            "population",
+            "region",
+        ]:
             raise HTTPException(
                 status_code=s.HTTP_400_BAD_REQUEST, detail="Invalid sort field."
             )
 
-        if order_by and order_by not in ["asc", "desc"]:
+        if order_by and order_by not in ["1", "-1"]:
             raise HTTPException(
                 status_code=s.HTTP_400_BAD_REQUEST, detail="Invalid sort order."
             )

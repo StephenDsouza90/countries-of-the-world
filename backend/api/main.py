@@ -1,6 +1,6 @@
 """
 Contains the APIBackend class, which is the main entrypoint for the API backend.
-It initializes the FastAPI app instance and the DatabaseManager instance.
+It initializes the FastAPI app instance and the SQLDatabaseManager instance.
 It also sets up the routes for the API.
 """
 
@@ -10,10 +10,10 @@ from redis import StrictRedis
 from fastapi import FastAPI, Query, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.db.manager import DatabaseManager
+from internal.db.manager import NoSQLDatabaseManager
 from backend.api.decorator import handle_exception
 from backend.api.handler import RequestHandler
-from cache.cache import CacheManager
+from internal.cache.cache import CacheManager
 
 
 class APIBackend:
@@ -23,8 +23,10 @@ class APIBackend:
 
     def __init__(self, db_url: str, redis_client: StrictRedis):
         self.app = FastAPI(
-            title="Recruiting Test",
+            title="Countries API",
+            description="API for managing countries and their images",
             version="0.1.0",
+            swagger_ui_parameters={"syntaxHighlight": False},
         )
         self.app.add_middleware(
             CORSMiddleware,
@@ -38,7 +40,7 @@ class APIBackend:
         self.request_handler = RequestHandler(self.db_manager, self.cache_manager)
         self._setup_routes()
 
-    def _initialize_database_manager(self, db_url: str) -> DatabaseManager:
+    def _initialize_database_manager(self, db_url: str) -> NoSQLDatabaseManager:
         """
         Initialize the database manager
 
@@ -49,11 +51,11 @@ class APIBackend:
             ValueError: If the DB_URL environment variable is not set
 
         Returns:
-            DatabaseManager: The database manager instance
+            NoSQLDatabaseManager: The database manager instance
         """
         if not db_url:
             raise ValueError("DB_URL environment variable is not set.")
-        manager = DatabaseManager(db_url)
+        manager = NoSQLDatabaseManager(db_url)
         manager.bootstrap()
         return manager
 
@@ -73,10 +75,14 @@ class APIBackend:
         @self.app.get("/countries")
         @handle_exception
         async def get_countries(
-            limit: Optional[int] = None,
-            sortBy: Optional[str] = Query("name", description="Field to sort by"),
+            limit: Optional[int] = Query(
+                250, description="Maximum number of countries to return"
+            ),
+            sortBy: Optional[str] = Query(
+                "country_name", description="Field to sort by"
+            ),
             orderBy: Optional[str] = Query(
-                "asc", description="Sort order: 'asc' or 'desc'"
+                "1", description="Sort order: 1 for asc or -1 for desc"
             ),
         ):
             """
@@ -85,7 +91,7 @@ class APIBackend:
             Args:
                 limit (Optional[int]): The maximum number of countries to return
                 sortBy (Optional[str]): The field to sort by
-                orderBy (Optional[str]): The sort order, either 'asc' or 'desc'
+                orderBy (Optional[int]): The sort order, either 1 'asc' or -1 'desc'
 
             Returns:
                 dict: A dictionary containing the list of countries
@@ -93,7 +99,7 @@ class APIBackend:
             Raises:
                 ValueError: If the field are not valid
             """
-            countries = self.request_handler.get_countries(limit, sortBy, orderBy)
+            countries = self.request_handler.get_countries(limit, sortBy, int(orderBy))
             return {"countries": countries}
 
         @self.app.get("/countries/{countryName}")

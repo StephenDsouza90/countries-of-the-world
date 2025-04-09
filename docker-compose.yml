@@ -6,22 +6,16 @@ services:
     networks:
       - backend_network
 
-  postgres:
-    image: "postgres:13"
+  mango:
+    image: "mongo:4.4"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: recruiting
-    expose:
-      - "5432"
+      - mongo_data:/data/db
     ports:
-      - "5432:5432"
+      - "27017:27017"
     networks:
       - backend_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "mongo --eval 'db.adminCommand(\"ping\")'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,11 +27,11 @@ services:
     volumes:
       - ./:/srv/recruiting/
     environment:
-      DB_URL: "postgresql://postgres:postgres@postgres:5432/recruiting"
+      MANGO_DB_URL: "mongodb://mango:27017"
     networks:
       - backend_network
     depends_on:
-      postgres:
+      mango:
         condition: service_healthy
 
   backend:
@@ -49,7 +43,7 @@ services:
       - ./assets:/assets
     command: uvicorn --reload --reload-dir "/srv/recruiting/backend" --host 0.0.0.0 --port 8080 --log-level "debug" "backend.api.app:app"
     environment:
-      DB_URL: "postgresql://postgres:postgres@postgres:5432/recruiting"
+      MANGO_DB_URL: "mongodb://mango:27017"
     ports:
       - "8080:8080"
     networks:
@@ -72,9 +66,8 @@ services:
       backend:
         condition: service_started
 
-
 volumes:
-  postgres_data: {}
+  mongo_data: {}
 
 networks:
   backend_network: {}

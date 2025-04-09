@@ -141,7 +141,7 @@ const CountryDetailsPage = () => {
             <tbody>
               <tr>
                 <td>1</td>
-                <td>{countryInfo.country.name}</td>
+                <td>{countryInfo.country.country_name}</td>
                 <td>{countryInfo.country.population || 'N/A'}</td>
                 <td>{countryInfo.country.area || 'N/A'}</td>
                 <td>

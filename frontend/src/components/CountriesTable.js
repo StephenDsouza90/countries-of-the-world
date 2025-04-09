@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom"; // Import useNavigate
 const CountriesTable = () => {
   const [countries, setCountries] = useState([]);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState("name"); // Default sort field
-  const [orderBy, setOrderBy] = useState("asc"); // Default sort order
+  const [sortBy, setSortBy] = useState("country_name"); // Default sort field
+  const [orderBy, setOrderBy] = useState("1"); // Default sort order
   const [limit, setLimit] = useState(null); // Default limit
   let apiUrl = process.env.REACT_APP_API_URL;
   const navigate = useNavigate(); // Initialize navigate
@@ -69,7 +69,7 @@ const CountriesTable = () => {
         <label>
           Sort By: 
           <select value={sortBy} onChange={handleSortChange}>
-            <option value="name">Name</option>
+            <option value="country_name">Country Name</option>
             <option value="population">Population</option>
             <option value="area">Area</option>
             <option value="population_density">Population Density</option>
@@ -79,8 +79,8 @@ const CountriesTable = () => {
         <label style={{ marginLeft: "1rem" }}>
           Order: 
           <select value={orderBy} onChange={handleOrderChange}>
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
+            <option value="1">Ascending</option>
+            <option value="-1">Descending</option>
           </select>
         </label>
         <label style={{ marginLeft: "1rem" }}>
@@ -121,9 +121,9 @@ const CountriesTable = () => {
                       cursor: 'pointer',
                       padding: 0
                     }}
-                    onClick={() => handleCountryClick(country.name)}
+                    onClick={() => handleCountryClick(country.country_name)}
                   >
-                    {country.name}
+                    {country.country_name}
                   </button>
                 </td>
                 <td>{country.population}</td>

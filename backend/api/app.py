@@ -6,9 +6,9 @@ It creates an instance of the APIBackend class and uses the FastAPI app instance
 import os
 
 from backend.api.main import APIBackend
-from cache.client import redis_client
+from internal.cache.client import redis_client
 
-db_url = os.getenv("DB_URL")
+db_url = os.getenv("MANGO_DB_URL")
 if not db_url:
     raise ValueError("DB_URL environment variable is not set.")
 
