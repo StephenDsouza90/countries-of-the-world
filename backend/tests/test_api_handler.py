@@ -55,14 +55,14 @@ def test_get_countries_from_db(request_handler, mock_db_manager, mock_cache_mana
 
 
 def test_get_country_from_cache(request_handler, mock_cache_manager):
-    mock_cache_manager.get_data.return_value = '{"country_name": "CountryA"}'
+    mock_cache_manager.get_dict_data.return_value = {"country_name": "CountryA"}
     result = request_handler.get_country("CountryA")
     assert result == {"country_name": "CountryA"}
-    mock_cache_manager.get_data.assert_called_once_with("country:CountryA")
+    mock_cache_manager.get_dict_data.assert_called_once_with("country:CountryA")
 
 
 def test_get_country_from_db(request_handler, mock_db_manager, mock_cache_manager):
-    mock_cache_manager.get_data.return_value = None
+    mock_cache_manager.get_dict_data.return_value = None
     mock_db_manager.get_country.return_value = {
         "country_name": "CountryA",
         "population_density": 100,
@@ -79,7 +79,7 @@ def test_get_country_from_db(request_handler, mock_db_manager, mock_cache_manage
         "region": "RegionA",
     }
     mock_db_manager.get_country.assert_called_once_with("CountryA")
-    mock_cache_manager.set_data.assert_called_once()
+    mock_cache_manager.set_dict_data.assert_called_once()
 
 
 def test_upload_image(request_handler, mock_db_manager, mock_cache_manager, tmp_path):

@@ -36,6 +36,41 @@ class CacheManager:
             print(f"Error setting data in cache: {e}")
             return False
 
+    def set_dict_data(self, key: str, value: dict) -> bool:
+        """
+        Set a dictionary in Redis cache with a specified key and value.
+
+        Args:
+            key (str): The key under which the dictionary will be stored.
+            value (dict): The dictionary to be stored in the cache.
+
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+        """
+        try:
+            self.client.hset(key, mapping=value)
+            return True
+        except Exception as e:
+            print(f"Error setting dictionary data in cache: {e}")
+            return False
+
+    def get_dict_data(self, key: str) -> dict:
+        """
+        Get a dictionary from Redis cache using a specified key.
+
+        Args:
+            key (str): The key for which the dictionary is to be retrieved.
+
+        Returns:
+            dict: The dictionary associated with the key, or None if an error occurs.
+        """
+        try:
+            value = self.client.hget(key)
+            return value
+        except Exception as e:
+            print(f"Error getting dictionary data from cache: {e}")
+            return None
+
     def get_data(self, key: str) -> any:
         """
         Get data from Redis cache using a specified key.

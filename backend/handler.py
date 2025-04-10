@@ -120,16 +120,16 @@ class RequestHandler:
         cache_key = f"country:{country_name}"
 
         # Check if the data is in the cache
-        cached_data = self.cache_manager.get_data(cache_key)
+        cached_data = self.cache_manager.get_dict_data(cache_key)
         if cached_data:
-            return json.loads(cached_data)
+            return cached_data
 
         # If not in cache, fetch from the database
         country = self.db_manager.get_country(country_name)
         country = self._extract_country_data(country)
 
         # Serialize the result and store it in the cache
-        self.cache_manager.set_data(cache_key, json.dumps(country))
+        self.cache_manager.set_dict_data(cache_key, country)
 
         return country
 

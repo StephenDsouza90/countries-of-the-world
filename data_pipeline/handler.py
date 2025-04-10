@@ -5,7 +5,6 @@ adding or updating country information in the database,
 and managing cache operations.
 """
 
-import json
 from typing import List
 
 from internal.db.manager import NoSQLDatabaseManager
@@ -45,8 +44,8 @@ class Handler:
                 country["population_density"] = population / area
 
                 # Check if the country is already in the cache
-                match = self.cache_manager.get_data(name)
-                match = json.loads(match) if match else None
+                match = self.cache_manager.get_dict_data(name)
+                match = match if match else None
 
                 if not match:
                     # Check if the country is already in the database
@@ -59,7 +58,7 @@ class Handler:
                         self.db_manager.add_country(name, country)
 
                         # Add to cache
-                        self.cache_manager.set_data(name, json.dumps(country))
+                        self.cache_manager.set_dict_data(name, country)
 
                     case _ if (
                         population != match["population"] or area != match["area"]
@@ -68,7 +67,10 @@ class Handler:
                         self.db_manager.update_country(name, country)
 
                         # Update cache
-                        self.cache_manager.set_data(name, json.dumps(country))
+                        self.cache_manager.set_dict_data(name, country)
 
             except KeyError as error:
                 raise KeyError(f"Couldn't process country: {error}")
+
+            except Exception as error:
+                raise Exception(f"An error occurred while processing country: {error}")

@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock
 import pytest
-import json
 from data_pipeline.handler import Handler
 
 
@@ -30,7 +29,7 @@ def test_process_countries_add_new_country(
         }
     ]
 
-    mock_cache_manager.get_data.return_value = None
+    mock_cache_manager.get_dict_data.return_value = None
     mock_db_manager.get_country.return_value = None
 
     handler.process_countries(countries)
@@ -45,17 +44,15 @@ def test_process_countries_add_new_country(
             "population_density": 20.0,
         },
     )
-    mock_cache_manager.set_data.assert_called_once_with(
+    mock_cache_manager.set_dict_data.assert_called_once_with(
         "CountryA",
-        json.dumps(
-            {
-                "name": {"common": "CountryA"},
-                "population": 1000000,
-                "area": 50000,
-                "country_name": "CountryA",
-                "population_density": 20.0,
-            }
-        ),
+        {
+            "name": {"common": "CountryA"},
+            "population": 1000000,
+            "area": 50000,
+            "country_name": "CountryA",
+            "population_density": 20.0,
+        },
     )
 
 
@@ -78,7 +75,7 @@ def test_process_countries_update_existing_country(
         "population_density": 15.0,
     }
 
-    mock_cache_manager.get_data.return_value = json.dumps(existing_data)
+    mock_cache_manager.get_dict_data.return_value = existing_data
 
     handler.process_countries(countries)
 
@@ -92,17 +89,15 @@ def test_process_countries_update_existing_country(
             "population_density": 20.0,
         },
     )
-    mock_cache_manager.set_data.assert_called_once_with(
+    mock_cache_manager.set_dict_data.assert_called_once_with(
         "CountryB",
-        json.dumps(
-            {
-                "name": {"common": "CountryB"},
-                "population": 2000000,
-                "area": 100000,
-                "country_name": "CountryB",
-                "population_density": 20.0,
-            }
-        ),
+        {
+            "name": {"common": "CountryB"},
+            "population": 2000000,
+            "area": 100000,
+            "country_name": "CountryB",
+            "population_density": 20.0,
+        },
     )
 
 
@@ -125,12 +120,12 @@ def test_process_countries_skip_unchanged_country(
         "population_density": 20.0,
     }
 
-    mock_cache_manager.get_data.return_value = json.dumps(existing_data)
+    mock_cache_manager.get_dict_data.return_value = existing_data
 
     handler.process_countries(countries)
 
     mock_db_manager.update_country.assert_not_called()
-    mock_cache_manager.set_data.assert_not_called()
+    mock_cache_manager.set_dict_data.assert_not_called()
 
 
 def test_process_countries_key_error(handler):
